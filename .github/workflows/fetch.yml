@@ -1,0 +1,48 @@
+name: Fetch X Data
+
+on:
+  schedule:
+    # 每 6 小时运行一次（UTC 时间）
+    - cron: '0 */6 * * *'
+  # 支持手动触发
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    
+    # 授予写入权限以便 push
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install xreach
+        run: npm install -g xreach-cli
+      
+      - name: Run fetch script
+        env:
+          X_AUTH_TOKEN: ${{ secrets.X_AUTH_TOKEN }}
+          X_CT0: ${{ secrets.X_CT0 }}
+        run: python fetch_x.py
+      
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          # 只有在有变更时才 commit
+          git diff --cached --quiet || git commit -m "Update $(date -u +%Y-%m-%d)"
+          git push
