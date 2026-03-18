@@ -47,7 +47,10 @@ def run_xreach(args: str) -> list:
             return []
         if not result.stdout.strip():
             return []
-        return json.loads(result.stdout)
+        data = json.loads(result.stdout)
+        if isinstance(data, dict) and "items" in data:
+            return data["items"]
+        return data if isinstance(data, list) else []
     except subprocess.TimeoutExpired:
         print(f"[警告] xreach 超时: {args}")
         return []
@@ -111,10 +114,10 @@ def parse_tweet(tweet: dict) -> dict:
     """解析推文数据，提取关键字段"""
     tweet_id = tweet.get("id") or tweet.get("rest_id") or ""
     
-    author = tweet.get("author", {})
-    if isinstance(author, dict):
-        username = author.get("username") or author.get("screen_name") or "unknown"
-        name = author.get("name") or username
+    user = tweet.get("user", {})
+    if isinstance(user, dict):
+        username = user.get("screenName") or user.get("screen_name") or "unknown"
+        name = user.get("name") or username
     else:
         username = "unknown"
         name = "unknown"
@@ -122,7 +125,7 @@ def parse_tweet(tweet: dict) -> dict:
     text = tweet.get("text") or tweet.get("full_text") or ""
     text = text.replace("\n", " ").strip()
     
-    created_at = tweet.get("created_at") or ""
+    created_at = tweet.get("createdAt") or tweet.get("created_at") or ""
     if created_at:
         try:
             dt = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
