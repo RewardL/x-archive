@@ -83,20 +83,26 @@ def fetch_user_tweets(account: str) -> list:
     """抓取用户时间线"""
     print(f"[抓取] 用户 {account} 的最新推文...")
     tweets = run_xreach(f'tweets {account} -n {TWEETS_PER_SOURCE}')
+    result = []
     for t in tweets:
-        t["_source"] = f"用户 {account}"
-        t["_source_type"] = "user"
-    return tweets
+        if isinstance(t, dict):
+            t["_source"] = f"用户 {account}"
+            t["_source_type"] = "user"
+            result.append(t)
+    return result
 
 
 def fetch_keyword_tweets(keyword: str) -> list:
     """按关键词搜索"""
     print(f"[抓取] 关键词 \"{keyword}\" ...")
     tweets = run_xreach(f'search "{keyword}" -n {TWEETS_PER_SOURCE}')
+    result = []
     for t in tweets:
-        t["_source"] = f"关键词 \"{keyword}\""
-        t["_source_type"] = "keyword"
-    return tweets
+        if isinstance(t, dict):
+            t["_source"] = f"关键词 \"{keyword}\""
+            t["_source_type"] = "keyword"
+            result.append(t)
+    return result
 
 
 def filter_new_tweets(tweets: list, seen_ids: set) -> list:
